@@ -65,7 +65,6 @@
 			]
 		},
 		"post_created_time": {
-			"format": "date-time",
 			"type": [
 				"null",
 				"string"
