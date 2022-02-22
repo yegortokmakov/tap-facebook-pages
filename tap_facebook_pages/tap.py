@@ -86,7 +86,7 @@ class TapFacebookPages(Tap):
     #     return response_data['access_token']
 
     def discover_streams(self) -> List[Stream]:
-        partitions = [{"page_id": x} for x in self.config["page_ids"]]
+        # partitions = [{"page_id": x} for x in self.config["page_ids"]]
         streams = []
         for stream_class in STREAM_TYPES:
             stream = stream_class(tap=self)
@@ -103,20 +103,20 @@ class TapFacebookPages(Tap):
             streams.append(stream)
         return streams
 
-    def load_streams(self) -> List[Stream]:
-        stream_objects = self.discover_streams()
-        if self.input_catalog:
-            selected_streams = []
-            catalog = singer.catalog.Catalog.from_dict(self.input_catalog)
-            for stream in catalog.streams:
-
-                if stream.is_selected:
-                    selected_streams.append(stream.tap_stream_id)
-
-            stream_objects = [x for x in stream_objects if x.tap_stream_id in selected_streams]
-            for obj in stream_objects:
-                self.logger.info("Found stream: " + obj.tap_stream_id)
-        return stream_objects
+    # def load_streams(self) -> List[Stream]:
+    #     stream_objects = self.discover_streams()
+    #     if self.input_catalog:
+    #         selected_streams = []
+    #         catalog = singer.catalog.Catalog.from_dict(self.input_catalog)
+    #         for stream in catalog.streams:
+    #
+    #             if stream.is_selected:
+    #                 selected_streams.append(stream.tap_stream_id)
+    #
+    #         stream_objects = [x for x in stream_objects if x.tap_stream_id in selected_streams]
+    #         for obj in stream_objects:
+    #             self.logger.info("Found stream: " + obj.tap_stream_id)
+    #     return stream_objects
 
 
 # CLI Execution:
