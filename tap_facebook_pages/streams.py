@@ -4,7 +4,7 @@ import sys
 
 import pendulum
 from pathlib import Path
-from typing import Any, Dict, Optional, Iterable
+from typing import Any, Dict, Iterable, List, Optional
 from singer_sdk.streams import RESTStream
 import urllib.parse
 import requests
@@ -26,7 +26,7 @@ BASE_URL = "https://graph.facebook.com/v10.0/{page_id}"
 class FacebookPagesStream(RESTStream):
     access_tokens = {}
     metrics = []
-    partitions = []
+    # partitions = []
     page_id: str
 
     def prepare_request(self, partition: Optional[dict], next_page_token: Optional[Any] = None) -> requests.PreparedRequest:
@@ -38,20 +38,25 @@ class FacebookPagesStream(RESTStream):
     def url_base(self) -> str:
         return BASE_URL
 
+    @property
+    def partitions(self) -> Optional[List[dict]]:
+        return [{"page_id": x} for x in self.config["page_ids"]]
+
     def get_url_params(self, partition: Optional[dict], next_page_token: Optional[Any] = None) -> Dict[str, Any]:
         self.page_id = partition["page_id"]
         if next_page_token:
             return urllib.parse.parse_qs(urllib.parse.urlparse(next_page_token).query)
 
-        params = {}
+        params = {
+            "access_token": self.config["access_token"],
+            "limit": 100,
+        }
 
         starting_datetime = self.get_starting_timestamp(partition)
         if starting_datetime:
             start_date_timestamp = int(starting_datetime.timestamp())
             params.update({"since": start_date_timestamp})
 
-        params.update({"access_token": self.access_tokens[partition["page_id"]]})
-        params.update({"limit": 100})
         return params
 
     def get_next_page_token(self, response: requests.Response, previous_token: Optional[Any] = None) -> Any:

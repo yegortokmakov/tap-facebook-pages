@@ -2,7 +2,7 @@
 import json
 import logging
 from pathlib import PurePath
-from typing import List, Union
+from typing import Dict, List, Union
 import requests
 import singer
 from singer_sdk import Tap, Stream
@@ -44,54 +44,62 @@ class TapFacebookPages(Tap):
         Property("start_date", DateTimeType, required=True),
     ).to_dict()
 
-    def __init__(
-        self,
-        config: Union[PurePath, str, dict, None] = None,
-        catalog: Union[PurePath, str, dict, None] = None,
-        state: Union[PurePath, str, dict, None] = None,
-        parse_env_config: bool = True,
-        validate_config: bool = True,
-    ) -> None:
-        super().__init__(config, catalog, state, parse_env_config, validate_config)
-        self.access_tokens = {}
-        for page_id in self.config['page_ids']:
-            self.access_tokens[page_id] = self.exchange_token(page_id, self.config['access_token'])
+    # def __init__(
+    #     self,
+    #     config: Union[PurePath, str, dict, None] = None,
+    #     catalog: Union[PurePath, str, dict, None] = None,
+    #     state: Union[PurePath, str, dict, None] = None,
+    #     parse_env_config: bool = True,
+    #     validate_config: bool = True,
+    # ) -> None:
+    #     super().__init__(config, catalog, state, parse_env_config, validate_config)
+    #     self.access_tokens = {}
+    #     for page_id in self.config['page_ids']:
+    #         self.access_tokens[page_id] = self.exchange_token(page_id, self.config['access_token'])
+    #
+    #     self.partitions = [{"page_id": x} for x in self.config["page_ids"]]
 
-        self.partitions = [{"page_id": x} for x in self.config["page_ids"]]
+    # @property
+    # def access_tokens(self) -> Dict[str, str]:
+    #     return {
+    #         page_id: self.exchange_token(page_id, self.config.get("access_token"))
+    #         for page_id in self.config.get("page_ids")
+    #     }
 
-    def exchange_token(self, page_id: str, access_token: str):
-        url = BASE_URL.format(page_id=page_id)
-        data = {
-            'fields': 'access_token,name',
-            'access_token': access_token
-        }
-
-        self.logger.info("Exchanging access token for page with id=" + page_id)
-        response = session.get(url=url, params=data)
-        response_data = json.loads(response.text)
-        if response.status_code != 200:
-            error_message = "Failed exchanging token: " + response_data["error"]["message"]
-            self.logger.error(error_message)
-            raise RuntimeError(
-                error_message
-            )
-        self.logger.info("Successfully exchanged access token for page with id=" + page_id)
-        return response_data['access_token']
+    # def exchange_token(self, page_id: str, access_token: str):
+    #     url = BASE_URL.format(page_id=page_id)
+    #     data = {
+    #         'fields': 'access_token,name',
+    #         'access_token': access_token
+    #     }
+    #
+    #     self.logger.info("Exchanging access token for page with id=" + page_id)
+    #     response = session.get(url=url, params=data)
+    #     response_data = json.loads(response.text)
+    #     if response.status_code != 200:
+    #         error_message = "Failed exchanging token: " + response_data["error"]["message"]
+    #         self.logger.error(error_message)
+    #         raise RuntimeError(
+    #             error_message
+    #         )
+    #     self.logger.info("Successfully exchanged access token for page with id=" + page_id)
+    #     return response_data['access_token']
 
     def discover_streams(self) -> List[Stream]:
+        partitions = [{"page_id": x} for x in self.config["page_ids"]]
         streams = []
         for stream_class in STREAM_TYPES:
             stream = stream_class(tap=self)
-            stream.partitions = self.partitions
-            stream.access_tokens = self.access_tokens
+            # stream.partitions = partitions
+            # stream.access_tokens = self.access_tokens
             streams.append(stream)
 
         for insight_stream in INSIGHT_STREAMS:
             stream = insight_stream["class"](tap=self, name=insight_stream["name"])
             stream.tap_stream_id = insight_stream["name"]
             stream.metrics = insight_stream["metrics"]
-            stream.partitions = self.partitions
-            stream.access_tokens = self.access_tokens
+            # stream.partitions = partitions
+            # stream.access_tokens = self.access_tokens
             streams.append(stream)
         return streams
 
