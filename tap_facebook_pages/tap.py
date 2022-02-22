@@ -44,10 +44,15 @@ class TapFacebookPages(Tap):
         Property("start_date", DateTimeType, required=True),
     ).to_dict()
 
-    def __init__(self, config: Union[PurePath, str, dict, None] = None,
-                 catalog: Union[PurePath, str, dict, None] = None, state: Union[PurePath, str, dict, None] = None,
-                 parse_env_config: bool = True) -> None:
-        super().__init__(config, catalog, state, parse_env_config)
+    def __init__(
+        self,
+        config: Union[PurePath, str, dict, None] = None,
+        catalog: Union[PurePath, str, dict, None] = None,
+        state: Union[PurePath, str, dict, None] = None,
+        parse_env_config: bool = True,
+        validate_config: bool = True,
+    ) -> None:
+        super().__init__(config, catalog, state, parse_env_config, validate_config)
         self.access_tokens = {}
         for page_id in self.config['page_ids']:
             self.access_tokens[page_id] = self.exchange_token(page_id, self.config['access_token'])
