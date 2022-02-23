@@ -48,7 +48,8 @@ class FacebookPagesStream(RESTStream):
             return urllib.parse.parse_qs(urllib.parse.urlparse(next_page_token).query)
 
         params = {
-            "access_token": self.config["access_token"],
+            # "access_token": self.config["access_token"],
+            "access_token": self.access_tokens[self.page_id],
             "limit": 100,
         }
 
