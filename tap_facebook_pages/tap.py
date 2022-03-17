@@ -107,20 +107,20 @@ class TapFacebookPages(Tap):
             streams.append(stream)
         return streams
 
-    def load_streams(self) -> List[Stream]:
-        stream_objects = self.discover_streams()
-        if self.input_catalog:
-            selected_streams = []
-            catalog = singer.catalog.Catalog.from_dict(self.input_catalog)
-
-            for stream in catalog.streams:
-                if stream.is_selected:
-                    selected_streams.append(stream.tap_stream_id)
-
-            stream_objects = [x for x in stream_objects if x.tap_stream_id in selected_streams]
-            for obj in stream_objects:
-                self.logger.info("Found stream: " + obj.tap_stream_id)
-        return stream_objects
+    # def load_streams(self) -> List[Stream]:
+    #     stream_objects = self.discover_streams()
+    #     if self.input_catalog:
+    #         selected_streams = []
+    #         catalog = singer.catalog.Catalog.from_dict(self.input_catalog)
+    #
+    #         for stream in catalog.streams:
+    #             if stream.is_selected:
+    #                 selected_streams.append(stream.tap_stream_id)
+    #
+    #         stream_objects = [x for x in stream_objects if x.tap_stream_id in selected_streams]
+    #         for obj in stream_objects:
+    #             self.logger.info("Found stream: " + obj.tap_stream_id)
+    #     return stream_objects
 
 
 # CLI Execution:
