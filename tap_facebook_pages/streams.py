@@ -5,6 +5,7 @@ import sys
 import pendulum
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
+from singer_sdk.exceptions import FatalAPIError, RetriableAPIError
 from singer_sdk.streams import RESTStream
 import urllib.parse
 import requests
@@ -70,6 +71,23 @@ class FacebookPagesStream(RESTStream):
         if "context" in stream_or_partition_state and "page_id" in stream_or_partition_state["context"]:
             row["page_id"] = stream_or_partition_state["context"]["page_id"]
         return row
+
+    def validate_response(self, response: requests.Response) -> None:
+        # occasionally, FB returns a 400 claiming that we aren't using a page API token
+        # don't know what's causing this but it appears transient and to resolve w/ a retry
+        if response.status_code == 400:
+            if response.json().get("error", {}).get("message") == "(#190) This method must be called with a Page " \
+                                                                  "Access Token":
+                raise RetriableAPIError(response.json())
+
+        if 400 <= response.status_code < 500:
+            msg = (
+                f"{response.status_code} Client Error: "
+                f"{response.reason} for path: {self.path}: "
+                f"{response.json().get('error', {}).get('message')}"
+            )
+            raise FatalAPIError(msg)
+        super().validate_response(response)
 
 
 class Page(FacebookPagesStream):
@@ -212,13 +230,23 @@ class PageInsights(FacebookPagesStream):
                 for values in row["values"]:
                     if isinstance(values["value"], dict):
                         for key, value in values["value"].items():
-                            item = {
-                                "context": key,
-                                "value": value,
-                                "end_time": values["end_time"]
-                            }
-                            item.update(base_item)
-                            yield item
+                            if isinstance(value, dict):
+                                for k, v in value.items():
+                                    item = {
+                                        "context": f"{key} > {k}",
+                                        "value": float(v),
+                                        "end_time": values["end_time"]
+                                    }
+                                    item.update(base_item)
+                                    yield item
+                            else:
+                                item = {
+                                    "context": key,
+                                    "value": float(value),
+                                    "end_time": values["end_time"]
+                                }
+                                item.update(base_item)
+                                yield item
                     else:
                         values.update(base_item)
                         yield values

@@ -1,0 +1,39 @@
+version: 1
+send_anonymous_usage_stats: true
+project_id: 4128aaae-d007-4963-b48b-dcbbbababbfd
+include_paths:
+  - ./*.meltano.yml
+plugins:
+  extractors:
+  - name: tap-facebook-pages
+    namespace: tap_facebook_pages
+    pip_url: -e .
+    capabilities:
+    - state
+    - catalog
+    - discover
+    settings:
+    - name: page_ids
+    - name: access_token
+      kind: password
+    - name: start_date
+      value: '2022-01-01T00:00:00Z'
+#    uncomment if you have sufficient access to fetch monetization data
+#    select:
+#      - '*.*'
+#      - '!page_insight_CTA_clicks.*'
+#      - '!post_insight_video_ad_break.*'
+#      - '!page_insight_video_ad_break.*'
+  loaders:
+  - name: target-jsonl
+    variant: andyh1203
+    pip_url: target-jsonl
+  - name: target-bigquery
+    variant: adswerve
+    pip_url: git+https://github.com/adswerve/target-bigquery.git@v0.12.0
+    config:
+      project_id: nymag-analytics-157315
+      dataset_id: dev_meltano
+      add_metadata_columns: true
+      table_prefix: src_
+      merge_state_messages: false
