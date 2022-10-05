@@ -3,8 +3,10 @@ import re
 import sys
 
 import pendulum
+import backoff
+import copy
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Callable
 from singer_sdk.exceptions import FatalAPIError, RetriableAPIError
 from singer_sdk.streams import RESTStream
 import urllib.parse
@@ -21,7 +23,7 @@ NEXT_FACEBOOK_PAGE = "NEXT_FACEBOOK_PAGE"
 
 SCHEMAS_DIR = Path(__file__).parent / Path("./schemas")
 
-BASE_URL = "https://graph.facebook.com/v10.0/{page_id}"
+BASE_URL = "https://graph.facebook.com/v15.0/{page_id}"
 
 
 class FacebookPagesStream(RESTStream):
@@ -42,6 +44,63 @@ class FacebookPagesStream(RESTStream):
     @property
     def partitions(self) -> Optional[List[dict]]:
         return [{"page_id": x} for x in self.config["page_ids"]]
+
+    def request_decorator(self, func: Callable) -> Callable:
+        """Instantiate a decorator for handling request failures.
+        Developers may override this method to provide custom backoff or retry
+        handling.
+        Args:
+            func: Function to decorate.
+        Returns:
+            A decorated method.
+        """
+        decorator: Callable = backoff.on_exception(
+            backoff.expo,
+            (
+                FatalAPIError,
+                RetriableAPIError,
+                requests.exceptions.RequestException,
+            ),
+            # max_tries=9,
+            # max_time=1950,
+            base=30,
+            factor=5,
+        )(func)
+        return decorator
+
+    def request_records(self, context: Optional[dict]) -> Iterable[dict]:
+        """Request records from REST endpoint(s), returning response records.
+        If pagination is detected, pages will be recursed automatically.
+        Args:
+            context: Stream partition or context dictionary.
+        Yields:
+            An item for every record in the response.
+        Raises:
+            RuntimeError: If a loop in pagination is detected. That is, when two
+                consecutive pagination tokens are identical.
+        """
+        next_page_token: Any = None
+        finished = False
+        decorated_request = self.request_decorator(self._request)
+
+        while not finished:
+            prepared_request = self.prepare_request(
+                context, next_page_token=next_page_token
+            )
+            resp = decorated_request(prepared_request, context)
+            for row in self.parse_response(resp):
+                yield row
+            previous_token = copy.deepcopy(next_page_token)
+            next_page_token = self.get_next_page_token(
+                response=resp, previous_token=previous_token
+            )
+            if next_page_token and next_page_token == previous_token:
+                raise RuntimeError(
+                    f"Loop detected in pagination. "
+                    f"Pagination token {next_page_token} is identical to prior token."
+                )
+            # Cycle until get_next_page_token() no longer returns a value
+            finished = not next_page_token
 
     def get_url_params(self, partition: Optional[dict], next_page_token: Optional[Any] = None) -> Dict[str, Any]:
         self.page_id = partition["page_id"]
@@ -80,13 +139,13 @@ class FacebookPagesStream(RESTStream):
                                                                   "Access Token":
                 raise RetriableAPIError(response.json())
 
-        if 400 <= response.status_code < 500:
+        if 400 <= response.status_code <= 500:
             msg = (
                 f"{response.status_code} Client Error: "
                 f"{response.reason} for path: {self.path}: "
                 f"{response.json().get('error', {}).get('message')}"
             )
-            raise FatalAPIError(msg)
+            raise RetriableAPIError(msg)
         super().validate_response(response)
 
 
@@ -121,6 +180,12 @@ class Posts(FacebookPagesStream):
     def get_url_params(self, partition: Optional[dict], next_page_token: Optional[Any] = None) -> Dict[str, Any]:
 
         params = super().get_url_params(partition, next_page_token)
+
+        # some page requests will throw a 500 error with the msg:
+        #   "Please reduce the amount of data you're asking for, then retry your request"
+        # this reduces the limit of records to avoid that
+        params['limit'] = 30
+
         if next_page_token:
             return params
 
