@@ -329,6 +329,12 @@ class PostInsights(FacebookPagesStream):
 
     def get_url_params(self, partition: Optional[dict], next_page_token: Optional[Any] = None) -> Dict[str, Any]:
         params = super().get_url_params(partition, next_page_token)
+
+        # some page requests will throw a 500 error with the msg:
+        #   "Please reduce the amount of data you're asking for, then retry your request"
+        # this reduces the limit of records to avoid that
+        params['limit'] = 50
+
         if next_page_token:
             return params
 
