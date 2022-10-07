@@ -61,10 +61,10 @@ class FacebookPagesStream(RESTStream):
                 RetriableAPIError,
                 requests.exceptions.RequestException,
             ),
-            # max_tries=9,
-            # max_time=1950,
-            base=30,
-            factor=5,
+            max_tries=5,
+            max_time=600,
+            # base=30,
+            # factor=5,
         )(func)
         return decorator
 
