@@ -333,7 +333,7 @@ class PostInsights(FacebookPagesStream):
         # some page requests will throw a 500 error with the msg:
         #   "Please reduce the amount of data you're asking for, then retry your request"
         # this reduces the limit of records to avoid that
-        params['limit'] = 50
+        params['limit'] = 30
 
         if next_page_token:
             return params
