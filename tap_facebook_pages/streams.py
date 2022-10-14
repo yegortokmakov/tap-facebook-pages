@@ -7,6 +7,7 @@ import backoff
 import copy
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Callable
+# from backoff.types import Details
 from singer_sdk.exceptions import FatalAPIError, RetriableAPIError
 from singer_sdk.streams import RESTStream
 import urllib.parse
@@ -102,6 +103,10 @@ class FacebookPagesStream(RESTStream):
             # Cycle until get_next_page_token() no longer returns a value
             finished = not next_page_token
 
+    # def backoff_handler(self, details: Details):
+    #     backoff_args = details['args']
+    #     backoff_args.
+
     def get_url_params(self, partition: Optional[dict], next_page_token: Optional[Any] = None) -> Dict[str, Any]:
         self.page_id = partition["page_id"]
         if next_page_token:
@@ -184,7 +189,7 @@ class Posts(FacebookPagesStream):
         # some page requests will throw a 500 error with the msg:
         #   "Please reduce the amount of data you're asking for, then retry your request"
         # this reduces the limit of records to avoid that
-        params['limit'] = 10
+        params['limit'] = 5
 
         if next_page_token:
             return params
