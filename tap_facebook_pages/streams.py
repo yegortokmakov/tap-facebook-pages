@@ -249,6 +249,7 @@ class PostAttachments(FacebookPagesStream):
         if next_page_token:
             return params
 
+        params['limit'] = 80
         params.update({"fields": "id,created_time,attachments"})
         return params
 
