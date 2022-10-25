@@ -64,6 +64,12 @@
 				}
 			}
 		},
+		"title": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
 		"type": {
 			"type": [
 				"null",
