@@ -10,12 +10,6 @@
 				"string"
 			]
 		},
-		"page_id": {
-			"type": [
-				"null",
-				"string"
-			]
-		},
 		"description": {
 			"type": [
 				"null",

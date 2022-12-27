@@ -404,7 +404,7 @@ class Reels(FacebookPagesStream):
     def parse_response(self, response: requests.Response) -> Iterable[dict]:
         resp_json = response.json()
         for row in resp_json["data"]:
-            row["page_id"] = self.page_id
+            # row["page_id"] = self.page_id
             yield row
 
 
@@ -433,7 +433,7 @@ class ReelsInsights(FacebookPagesStream):
     def parse_response(self, response: requests.Response) -> Iterable[dict]:
         resp_json = response.json()
         for row in resp_json["data"]:
-            for insights in row["insights"]["data"]:
+            for insights in row["video_insights"]["data"]:
                 base_item = {
                     "post_id": row["id"],
                     "page_id": self.page_id,
