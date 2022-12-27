@@ -10,6 +10,12 @@
 				"string"
 			]
 		},
+		"created_time": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
 		"description": {
 			"type": [
 				"null",
