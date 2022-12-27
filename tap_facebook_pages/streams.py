@@ -374,3 +374,86 @@ class PostInsights(FacebookPagesStream):
                         else:
                             values.update(base_item)
                             yield values
+
+
+class Reels(FacebookPagesStream):
+    name = "reels"
+    tap_stream_id = "reels"
+    path = "/video_reels"
+    primary_keys = ["id"]
+    forced_replication_method = "FULL_TABLE"
+    schema_filepath = SCHEMAS_DIR / "reels.json"
+
+    def get_url_params(self, partition: Optional[dict], next_page_token: Optional[Any] = None) -> Dict[str, Any]:
+
+        params = super().get_url_params(partition, next_page_token)
+
+        # some page requests will throw a 500 error with the msg:
+        #   "Please reduce the amount of data you're asking for, then retry your request"
+        # this reduces the limit of records to avoid that
+        params['limit'] = 5
+
+        if next_page_token:
+            return params
+
+        fields = ','.join(self.config['columns']) if 'columns' in self.config else ','.join(
+            self.schema["properties"].keys())
+        params.update({"fields": fields})
+        return params
+
+    def parse_response(self, response: requests.Response) -> Iterable[dict]:
+        resp_json = response.json()
+        for row in resp_json["data"]:
+            row["page_id"] = self.page_id
+            yield row
+
+
+class ReelsInsights(FacebookPagesStream):
+    name = ""
+    tap_stream_id = ""
+    path = "/video_reels"
+    primary_keys = ["id"]
+    forced_replication_method = "FULL_TABLE"
+    schema_filepath = SCHEMAS_DIR / "reels_insights.json"
+
+    def get_url_params(self, partition: Optional[dict], next_page_token: Optional[Any] = None) -> Dict[str, Any]:
+        params = super().get_url_params(partition, next_page_token)
+
+        # some page requests will throw a 500 error with the msg:
+        #   "Please reduce the amount of data you're asking for, then retry your request"
+        # this reduces the limit of records to avoid that
+        params['limit'] = 10
+
+        if next_page_token:
+            return params
+
+        params.update({"fields": "id,created_time,video_insights.metric(" + ",".join(self.metrics) + ")"})
+        return params
+
+    def parse_response(self, response: requests.Response) -> Iterable[dict]:
+        resp_json = response.json()
+        for row in resp_json["data"]:
+            for insights in row["insights"]["data"]:
+                base_item = {
+                    "post_id": row["id"],
+                    "page_id": self.page_id,
+                    "post_created_time": row["created_time"],
+                    "name": insights["name"],
+                    "period": insights["period"],
+                    "title": insights["title"],
+                    "description": insights["description"],
+                    "id": insights["id"],
+                }
+                if "values" in insights:
+                    for values in insights["values"]:
+                        if isinstance(values["value"], dict):
+                            for key, value in values["value"].items():
+                                item = {
+                                    "context": key,
+                                    "value": value,
+                                }
+                                item.update(base_item)
+                                yield item
+                        else:
+                            values.update(base_item)
+                            yield values

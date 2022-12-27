@@ -1,0 +1,50 @@
+{
+	"type": [
+		"null",
+		"object"
+	],
+	"properties": {
+		"id": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
+		"page_id": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
+		"description": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
+		"length": {
+			"type": [
+				"null",
+				"number"
+			]
+		},
+		"views": {
+			"type": [
+				"null",
+				"number"
+			]
+		},
+		"permalink_url": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
+		"picture": {
+			"type": [
+				"null",
+				"string"
+			]
+		}
+	}
+}

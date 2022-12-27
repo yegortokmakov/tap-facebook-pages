@@ -1,4 +1,4 @@
-from tap_facebook_pages.streams import PageInsights, PostInsights
+from tap_facebook_pages.streams import PageInsights, PostInsights, ReelsInsights
 
 # TODO The insights tables can be further split if the insights with _unique postfix get their dedicated tables
 
@@ -443,6 +443,20 @@ INSIGHT_STREAMS = [
             "post_video_ad_break_ad_impressions",
             "post_video_ad_break_earnings",
             "post_video_ad_break_ad_cpm",
+        ]
+    },
+
+    # post_insight_video_ad_break
+    {
+        "class": ReelsInsights,
+        "name": "reels_insights",
+        "metrics": [
+            "post_video_likes_by_reaction_type",
+            "post_video_avg_time_watched",
+            "post_video_social_actions",
+            "post_video_view_time",
+            "post_impressions_unique",
+            "blue_reels_play_count",
         ]
     },
 

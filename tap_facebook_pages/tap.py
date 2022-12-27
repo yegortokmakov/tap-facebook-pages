@@ -16,7 +16,7 @@ from singer_sdk.typing import (
 
 from tap_facebook_pages.insights import INSIGHT_STREAMS
 from tap_facebook_pages.streams import (
-    Page, Posts, PostAttachments, PostTaggedProfile
+    Page, Posts, Reels, PostAttachments, PostTaggedProfile
 )
 
 PLUGIN_NAME = "tap-facebook-pages"
@@ -24,6 +24,7 @@ PLUGIN_NAME = "tap-facebook-pages"
 STREAM_TYPES = [
     Page,
     Posts,
+    Reels,
     PostAttachments,
     PostTaggedProfile,
 ]

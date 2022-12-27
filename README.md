@@ -27,6 +27,7 @@ Supported streams:
 
 - page -> Information about the pages identified by the page_ids set in the config file.
 - posts -> Retrieve all posts of the pages specified in the config files
+- reels -> Retrieve all video reels of the pages specified in the config files
 - post_tagged_profile -> Retrieve the names and the ids of the profiles which have been tagged in each post
 - post_attachments -> Retrieve all attachment informations for post attachments
 - page_insight_CTA_clicks -> page insights for:
@@ -311,4 +312,12 @@ Supported streams:
     - post_video_ad_break_earnings
     - post_video_ad_break_ad_cpm
 
+- reels_insights:
+
+    -  post_video_likes_by_reaction_type
+    - post_video_avg_time_watched
+    - post_video_social_actions
+    - post_video_view_time
+    - post_impressions_unique
+    - blue_reels_play_count
 
